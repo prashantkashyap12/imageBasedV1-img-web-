@@ -1,0 +1,179 @@
+
+import { login } from "helper/userManagment_helper";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Button,
+  Card,
+  CardBody,
+  FormGroup,
+  Form,
+  Input,
+  InputGroupAddon,
+  InputGroupText,
+  InputGroup,
+  Col,
+} from "reactstrap";
+import Spinner from "react-bootstrap/Spinner";
+import { jwtDecode } from "jwt-decode";
+import { toast } from "react-toastify";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+
+const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState("");
+  const navigate = useNavigate();
+
+  const signInHandler = async (e) => {
+    e.preventDefault();
+    if (!email) {
+      toast.warning("Email cannot be blank.");
+      return;
+    }
+
+    if (!password) {
+      toast.warning("Password cannot be blank.");
+      return;
+    }
+    try {
+      setIsLoading(true);
+      const res = await login(email, password);
+
+
+      if (res === undefined) {
+        toast.error("Can't Connect to network");
+        return;
+      }
+
+      if (!res.success) {
+        setIsLoading(false);
+        localStorage.setItem("token", res.token);
+        const decoded = jwtDecode(res.token);
+
+
+        const role = decoded.role;
+        const empid = decoded.nameid;
+        const phone = decoded.Phone;
+        const userName = decoded.unique_name;
+        const email = decoded.email;
+
+        localStorage.setItem("userData", JSON.stringify({ role, empid, phone, email, userName }));
+
+        if (decoded.Role === "Operator") {
+          navigate("/operator/index", { replace: true });
+        } else if (decoded.Role === "Moderator") {
+          navigate("/moderator/index", { replace: true });
+        } else {
+          navigate("/admin/index", { replace: true });
+        }
+
+        return;
+      }
+    } catch (error) {
+      setIsLoading(false);
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  return (
+    <>
+      <Col lg="5" md="7">
+        <Card className="bg-secondary shadow border-0">
+          <div className="text-center text-muted mt-4">
+            <img
+              alt="..."
+              src={require("../assets/img/brand/ios.png")}
+              height={"30rem"}
+            />
+          </div>
+          <CardBody className="px-lg-5 py-lg-5">
+            <div className="text-center text-muted mb-4">
+              <h1>Sign in </h1>
+            </div>
+            <Form role="form">
+              <FormGroup className="mb-3">
+                <InputGroup className="input-group-alternative">
+                  <InputGroupAddon addonType="prepend">
+                    <InputGroupText>
+                      <i className="ni ni-email-83" />
+                    </InputGroupText>
+                  </InputGroupAddon>
+                  <Input
+                    placeholder="Email"
+                    type="email"
+                    autoComplete="new-email"
+                    value={email}
+                    required
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </InputGroup>
+              </FormGroup>
+
+              <FormGroup>
+                <InputGroup className="input-group-alternative">
+                  <InputGroupAddon addonType="prepend">
+                    <InputGroupText>
+                      <i className="ni ni-lock-circle-open" />
+                    </InputGroupText>
+                  </InputGroupAddon>
+
+                  <Input
+                    placeholder="Password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    value={password}
+                    required
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+
+                  <InputGroupAddon addonType="append">
+                    <InputGroupText
+                      style={{ cursor: "pointer" }}
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </InputGroupText>
+                  </InputGroupAddon>
+                </InputGroup>
+              </FormGroup>
+
+              <div className="text-center">
+                <Button
+                  className="my-4"
+                  color="primary"
+                  disabled={isLoading}
+                  type="submit"
+                  onClick={signInHandler}
+                  style={{ minWidth: "100px", minHeight: "50px" }}
+                >
+                  {isLoading ? (
+                    <Spinner animation="border" role="status" />
+                  ) : (
+                    "Sign in"
+                  )}
+                </Button>
+
+                {/* Sign Up Button */}
+                <div className=" d-flex justify-content-center align-items-center">
+                  <span>Don't have an account?</span>
+                  <Button 
+                  className="m-0 p-1"
+                    color="link"
+                    type="button"
+                    onClick={() => navigate("/auth/signup")}
+                  > Sign Up
+                  </Button>
+                </div>
+              </div>
+            </Form>
+          </CardBody>
+        </Card>
+      </Col>
+    </>
+  );
+};
+
+export default Login;

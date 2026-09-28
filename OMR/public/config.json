@@ -1,0 +1,5 @@
+{
+  "backendUrl": "http://localhost:4100/",
+  "SERVER_IP": "http://localhost:7000",
+  "APP_IP": "localhost"
+}
