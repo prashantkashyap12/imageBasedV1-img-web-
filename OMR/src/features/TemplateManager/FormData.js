@@ -1,6 +1,6 @@
 import React, { useEffect, forwardRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { Modal, Button, Row, Col, Spinner, Form } from "react-bootstrap";
+import { Button, Row, Col, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
 
 const FormData = forwardRef(
@@ -17,20 +17,20 @@ const FormData = forwardRef(
     ref,
   ) => {
     const [customInput, setCustomInput] = useState("");
+    const intensityValues = [30, 45, 60, 75, 90, 100];
 
-    useEffect(() => {
-      if (isNewBox) {
-        setCurrentBoxData({});
-      }
-    }, [isNewBox]);
+    const getSliderValue = (intensity) => {
+      const index = intensityValues.indexOf(Number(intensity));
+      return index >= 0 ? index + 1 : 1;
+    };
+
+    useEffect(() => { if (isNewBox) { setCurrentBoxData({}); } }, [isNewBox]);
 
     useEffect(() => {
       if (Array.isArray(currentBoxData?.Custom)) {
         setCustomInput(currentBoxData.Custom.join(", "));
       }
     }, [currentBoxData]);
-
-    console.log(currentBoxData);
 
     const QUESTION_NAME_REGEX = /^([qQ])(\d+)-([qQ])(\d+)$/;
 
@@ -44,7 +44,7 @@ const FormData = forwardRef(
       const end = Number(m[4]);
 
       if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
-      if (end <= start) return null; // enforce increasing range
+      if (end <= start) return null;
 
       return {
         prefix,
@@ -55,43 +55,22 @@ const FormData = forwardRef(
     }
 
     const handleCustomBlur = () => {
-      const parsedArray = customInput
-        .split(",")
-        .map((item) => item.trim())
-        .filter((item) => item.length > 0);
-
-      setCurrentBoxData((prev) => ({
-        ...prev,
-        Custom: parsedArray,
-      }));
+      const parsedArray = customInput.split(",").map((item) => item.trim()).filter((item) => item.length > 0);
+      setCurrentBoxData((prev) => ({ ...prev, Custom: parsedArray, }));
     };
 
     const onSubmitHandler = (e) => {
       e.preventDefault();
 
       if (!currentBoxData) {
-        alert("Please fill all the fields");
+        toast.warning("Please fill all the fields");
         return;
       }
 
-      const {
-        totalRow,
-        totalCol,
-        fieldName,
-        fieldType,
-        ReadingDirection,
-        allowMultiple,
-      } = currentBoxData;
+      const { totalRow, totalCol, fieldName, fieldType, ReadingDirection, allowMultiple, } = currentBoxData;
 
       // Basic required fields validation
-      if (
-        !fieldName ||
-        !fieldType ||
-        !ReadingDirection ||
-        !allowMultiple ||
-        !totalCol ||
-        !totalRow
-      ) {
+      if (!fieldName || !fieldType || !ReadingDirection || !allowMultiple || !totalCol || !totalRow) {
         toast.warning("Please complete all required fields.");
         return;
       }
@@ -107,9 +86,7 @@ const FormData = forwardRef(
         const parsed = parseQuestionRange(fieldName);
 
         if (!parsed) {
-          toast.error(
-            "Invalid question field name. Use format q1-q10 or Q1-Q10.",
-          );
+          toast.error("Invalid question field name. Use format q1-q10 or Q1-Q10.",);
           return;
         }
       }
@@ -125,7 +102,7 @@ const FormData = forwardRef(
             y: 100,
             width: 150,
             height: 100,
-            bubbleIntensity: currentBoxData?.bubbleIntensity ?? 14.5,
+            bubbleIntensity: currentBoxData?.bubbleIntensity ?? 30,
             radius: currentBoxData?.radius ?? 0.4,
             isMerged: false,
             merge: false,
@@ -140,13 +117,9 @@ const FormData = forwardRef(
       // UPDATE EXISTING BOX
       setBoxes((prevBoxes) =>
         prevBoxes.map((box, idx) =>
-          idx === activeBox
-            ? {
-              ...currentBoxData,
-              fieldName: currentBoxData.fieldName?.trim(),
-              radius: currentBoxData?.radius ?? 0.4,
-            }
-            : box,
+          idx === activeBox ? {
+            ...currentBoxData, fieldName: currentBoxData.fieldName?.trim(), radius: currentBoxData?.radius ?? 0.4,
+          } : box,
         ),
       );
 
@@ -156,38 +129,21 @@ const FormData = forwardRef(
     const [shakeField, setShakeField] = useState({});
 
     const handleKeyDown = (e, fieldName) => {
-      const allowedKeys = [
-        "Backspace",
-        "Delete",
-        "ArrowLeft",
-        "ArrowRight",
-        "Arrowtop",
-        "ArrowBottom",
-        "Tab",
-      ];
+      const allowedKeys = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Arrowtop", "ArrowBottom", "Tab",];
 
       if (!/^[0-9]$/.test(e.key) && !allowedKeys.includes(e.key)) {
         e.preventDefault();
 
-        setShakeField((prev) => ({
-          ...prev,
-          [fieldName]: true,
-        }));
+        setShakeField((prev) => ({ ...prev, [fieldName]: true, }));
 
         setTimeout(() => {
-          setShakeField((prev) => ({
-            ...prev,
-            [fieldName]: false,
-          }));
+          setShakeField((prev) => ({ ...prev, [fieldName]: false, }));
         }, 300);
       }
     };
 
     return (
-      <Form
-        onSubmit={onSubmitHandler}
-        className="p--2 bg-white rounded shadow-sm "
-      >
+      <Form onSubmit={onSubmitHandler} className="p--2 bg-white rounded shadow-sm "      >
         <h2 className="text-center mb-1">Box Settings</h2>
 
         {currentBoxData?.fieldType !== "barcode" && currentBoxData?.fieldType !== "OCR_Reading" && (
@@ -220,12 +176,7 @@ const FormData = forwardRef(
                   value={currentBoxData?.totalCol}
                   className={shakeField.totalCol ? "shake" : ""}
                   onKeyDown={(e) => handleKeyDown(e, "totalCol")}
-                  onChange={(e) =>
-                    setCurrentBoxData((prev) => ({
-                      ...prev,
-                      totalCol: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setCurrentBoxData((prev) => ({ ...prev, totalCol: e.target.value, }))}
                 />
               </Form.Group>
             </Col>
@@ -271,12 +222,7 @@ const FormData = forwardRef(
                 type="text"
                 value={currentBoxData?.fieldName}
                 placeholder="Enter Field Name"
-                onChange={(e) =>
-                  setCurrentBoxData((prev) => ({
-                    ...prev,
-                    fieldName: e.target.value,
-                  }))
-                }
+                onChange={(e) => setCurrentBoxData((prev) => ({ ...prev, fieldName: e.target.value, }))}
               />
             </Form.Group>
           </Col>
@@ -287,13 +233,7 @@ const FormData = forwardRef(
               <Form.Control
                 as="select"
                 value={currentBoxData?.fieldType}
-                onChange={(e) =>
-                  setCurrentBoxData((prev) => ({
-                    ...prev,
-                    fieldType: e.target.value,
-                  }))
-                }
-              >
+                onChange={(e) => setCurrentBoxData((prev) => ({ ...prev, fieldType: e.target.value, }))}>
                 <option value="">Select direction</option>
                 <option value="formfield">Form Field</option>
                 <option value="questionfield">Question Field</option>
@@ -312,13 +252,7 @@ const FormData = forwardRef(
               <Form.Control
                 as="select"
                 value={currentBoxData?.ReadingDirection ?? ""}
-                onChange={(e) =>
-                  setCurrentBoxData((prev) => ({
-                    ...prev,
-                    ReadingDirection: e.target.value,
-                  }))
-                }
-              >
+                onChange={(e) => setCurrentBoxData((prev) => ({ ...prev, ReadingDirection: e.target.value, }))}    >
                 <option value="">Select direction</option>
                 <option value="Row">Row</option>
                 <option value="Column">Column</option>
@@ -483,21 +417,26 @@ const FormData = forwardRef(
             <Form.Group controlId="intensity">
               <Form.Label>
                 Intensity:{" "}
-                <strong>{currentBoxData?.bubbleIntensity ?? 14.5}</strong>
+                <strong>
+                  {getSliderValue(currentBoxData?.bubbleIntensity ?? 30)}
+                </strong>
               </Form.Label>
+
               <Form.Control
                 className="bubble-range"
                 type="range"
-                min={0}
-                max={30}
-                step={5}
-                value={currentBoxData?.bubbleIntensity}
-                onChange={(e) =>
+                min={1}
+                max={6}
+                step={1}
+                value={getSliderValue(currentBoxData?.bubbleIntensity ?? 30)}
+                onChange={(e) => {
+                  const sliderValue = Number(e.target.value);
+
                   setCurrentBoxData((prev) => ({
                     ...prev,
-                    bubbleIntensity: Number(e.target.value),
-                  }))
-                }
+                    bubbleIntensity: intensityValues[sliderValue - 1],
+                  }));
+                }}
               />
             </Form.Group>
           </Col>

@@ -44,34 +44,34 @@ const ScanGrid = forwardRef(function ScanGrid({ dataSource, headData, borderRowI
         color: "",
       });
 
-      // Process each cell for star or empty
-      args.row.cells.forEach((cell, cellIndex) => {
-        const column = cell.column;
-        if (!column) return;
-        const field = column.field;
-        const value = row[field];
-        let bgColor = "";
-        if (value != null && String(value).includes("*")) {
-          bgColor = "#ffcdd2";
-        } else if (value === null || value === "") {
-          bgColor = "yellow";
-        }
-        if (bgColor) {
-          cell.style.backgroundColor = bgColor;
+      // Star detection: any cell contains "*"
+      // const hasStar = Object.values(row).some((v) => String(v).includes("*"));
+      // if (hasStar) {
+      //   args.row.style.backgroundColor = "#ffcdd2"; // light red
+      //   return; // skip other styling
+      // }
+
+      // if (row?.FileName === borderRowId) {
+      //   args.row.style.backgroundColor = "#d4d4d4";
+      //   args.row.style.borderRadius = "10px";
+      // }
+
+      // if (row?.Success === "False") {
+      //   args.row.style.backgroundColor = "#f8d7da";
+      //   args.row.style.color = "#721c24";
+      // }
+
+      // const hasEmpty = Object.values(row).some((v) => v === null || v === "");
+      // if (!hasEmpty) return;
+
+      Object.keys(row).forEach((key) => {
+        if (row[key] === null || row[key] === "") {
+          const idx = Array.from(args.row.cells).findIndex(
+            (cell) => cell.column?.field === key,
+          );
+          if (idx !== -1) args.row.cells[idx].style.backgroundColor = "yellow";
         }
       });
-
-      // Selected row highlight
-      if (row?.FileName === borderRowId) {
-        args.row.style.backgroundColor = "#d4d4d4";
-        args.row.style.borderRadius = "10px";
-      }
-
-      // Failed rows
-      if (row?.Success === "False") {
-        args.row.style.backgroundColor = "#f8d7da";
-        args.row.style.color = "#721c24";
-        }
     },
     [borderRowId],
   );
