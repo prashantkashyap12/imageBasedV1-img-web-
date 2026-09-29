@@ -1,6 +1,13 @@
 import React, { forwardRef, useMemo, useCallback, useState, useEffect } from "react";
 import { GridComponent, ColumnsDirective, ColumnDirective, Sort, Inject, Toolbar, Filter, Resize, VirtualScroll, } from "@syncfusion/ej2-react-grids";
-import { emptyMessageTemplate } from "../utils/scanUtils";
+import {
+  emptyMessageTemplate,
+  classifyCell,
+  isFalseStatus,
+  hasRowData,
+  isMetaColumn,
+  COLORS,
+} from "../utils/scanUtils";
 
 const SERVICES = [Sort, Toolbar, Filter, Resize, VirtualScroll];
 
@@ -11,6 +18,14 @@ const EDIT_SETTINGS = {
 };
 
 const PAGE_SETTINGS = { pageSize: 50 };
+
+// Coloured cells hide the grid's own selection colour, so mark the selected
+// row with a blue top/bottom line instead.
+const SELECTION_CSS = `
+  .e-grid .e-rowcell.e-selectionbackground {
+    box-shadow: inset 0 2px 0 #5e72e4, inset 0 -2px 0 #5e72e4;
+  }
+`;
 
 const ScanGrid = forwardRef(function ScanGrid({ dataSource, headData, borderRowId, onRowSelected, onCellSelected, onActionComplete, onDataBound, onClick, onToolbarClick, },
   ref) {
@@ -31,50 +46,42 @@ const ScanGrid = forwardRef(function ScanGrid({ dataSource, headData, borderRowI
     return () => window.removeEventListener("resize", updateHeight);
   }, []);
 
-  const rowDataBound = useCallback(
-    (args) => {
-      const row = args.data;
+  // Row: red when Status is FALSE.
+  const rowDataBound = useCallback((args) => {
+    const bad = isFalseStatus(args.data);
+    Object.assign(args.row.style, {
+      backgroundColor: bad ? COLORS.rowFalse : "",
+      color: bad ? COLORS.rowFalseText : "",
+    });
+  }, []);
 
-      // Reset styles
-      Object.assign(args.row.style, {
-        border: "",
-        boxShadow: "",
-        borderRadius: "",
-        backgroundColor: "",
-        color: "",
-      });
+  // Cell: called for every rendered cell, including rows added or updated when
+  // a scan result arrives through the WebSocket, so colours stay in sync.
+  const queryCellInfo = useCallback((args) => {
+    const field = args.column?.field;
+    const style = args.cell.style;
 
-      // Star detection: any cell contains "*"
-      // const hasStar = Object.values(row).some((v) => String(v).includes("*"));
-      // if (hasStar) {
-      //   args.row.style.backgroundColor = "#ffcdd2"; // light red
-      //   return; // skip other styling
-      // }
+    // always reset first (cells can be reused while scrolling / after edits)
+    style.backgroundColor = "";
+    style.color = "";
+    if (!field) return;
 
-      // if (row?.FileName === borderRowId) {
-      //   args.row.style.backgroundColor = "#d4d4d4";
-      //   args.row.style.borderRadius = "10px";
-      // }
+    // FALSE status → the whole row is red, cell colours are not shown
+    if (isFalseStatus(args.data)) {
+      style.backgroundColor = COLORS.rowFalse;
+      style.color = COLORS.rowFalseText;
+      return;
+    }
 
-      // if (row?.Success === "False") {
-      //   args.row.style.backgroundColor = "#f8d7da";
-      //   args.row.style.color = "#721c24";
-      // }
+    // Empty filler rows at the bottom of the grid stay uncoloured
+    if (!hasRowData(args.data)) return;
 
-      // const hasEmpty = Object.values(row).some((v) => v === null || v === "");
-      // if (!hasEmpty) return;
+    // Only scanned answers (roll number, Q1…Qn, codes) are coloured by value
+    if (isMetaColumn(field)) return;
 
-      Object.keys(row).forEach((key) => {
-        if (row[key] === null || row[key] === "") {
-          const idx = Array.from(args.row.cells).findIndex(
-            (cell) => cell.column?.field === key,
-          );
-          if (idx !== -1) args.row.cells[idx].style.backgroundColor = "yellow";
-        }
-      });
-    },
-    [borderRowId],
-  );
+    const color = COLORS[classifyCell(args.data?.[field])];
+    if (color) style.backgroundColor = color;
+  }, []);
 
   const columns = useMemo(
     () =>
@@ -91,32 +98,36 @@ const ScanGrid = forwardRef(function ScanGrid({ dataSource, headData, borderRowI
   );
 
   return (
-    <GridComponent
-      ref={ref}
-      dataSource={dataSource}
-      enableVirtualization={true}
-      enableColumnVirtualization={true}
-      height={gridHeight}
-      onClick={onClick}
-      dataBound={onDataBound}
-      actionComplete={onActionComplete}
-      allowSorting={false}
-      allowFiltering={false}
-      allowResizing={true}
-      allowPdfExport={false}
-      editSettings={EDIT_SETTINGS}
-      toolbarClick={onToolbarClick}
-      selectionSettings={{ mode: "Row", type: "Single" }}
-      rowDataBound={rowDataBound}
-      rowSelected={onRowSelected}
-      cellSelected={onCellSelected}
-      emptyRecordTemplate={emptyMessageTemplate}
-      pageSettings={PAGE_SETTINGS}
-    >
-      <ColumnsDirective>{columns}</ColumnsDirective>
-      <Inject services={SERVICES} />
-    </GridComponent>
+    <>
+      <style>{SELECTION_CSS}</style>
+      <GridComponent
+        ref={ref}
+        dataSource={dataSource}
+        enableVirtualization={true}
+        enableColumnVirtualization={true}
+        height={gridHeight}
+        onClick={onClick}
+        dataBound={onDataBound}
+        actionComplete={onActionComplete}
+        allowSorting={false}
+        allowFiltering={false}
+        allowResizing={true}
+        allowPdfExport={false}
+        editSettings={EDIT_SETTINGS}
+        toolbarClick={onToolbarClick}
+        selectionSettings={{ mode: "Row", type: "Single" }}
+        rowDataBound={rowDataBound}
+        queryCellInfo={queryCellInfo}
+        rowSelected={onRowSelected}
+        cellSelected={onCellSelected}
+        emptyRecordTemplate={emptyMessageTemplate}
+        pageSettings={PAGE_SETTINGS}
+      >
+        <ColumnsDirective>{columns}</ColumnsDirective>
+        <Inject services={SERVICES} />
+      </GridComponent>
+    </>
   );
 });
 
-export default ScanGrid;  
+export default ScanGrid;

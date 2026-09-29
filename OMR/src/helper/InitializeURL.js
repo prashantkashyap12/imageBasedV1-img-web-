@@ -62,6 +62,9 @@ const initializeUrls = async () => {
     //Result Generation and Merge Csv
     GETCSVHEADER: `${baseUrl}api/OmrProcessing/GetCSVHeader`,
     GENERATE_RESULT: `${baseUrl}api/AmityDemand/GenerateResultExcel`,
+    // Path taken from the backend's working Postman call. If the backend confirms
+    // api/ResultGenration/GenerateResultExcel2 instead, change only this line.
+    GENERATE_RESULT_EXCEL2: `${baseUrl}api/AmityDemand/GenerateResultExcel2`, // added
     MERGECSV: `${baseUrl}api/AmityDemand/MargeCSV`,
     GET_DB_DATA: `${baseUrl}api/showRecord/GetDB_Rec`,
     DELETE_DB_DATA: `${baseUrl}api/showRecord/Delete_Rec`,

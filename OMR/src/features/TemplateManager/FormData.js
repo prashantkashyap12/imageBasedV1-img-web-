@@ -17,14 +17,18 @@ const FormData = forwardRef(
     ref,
   ) => {
     const [customInput, setCustomInput] = useState("");
-    const intensityValues = [30, 45, 60, 75, 90, 100];
+    const intensityValues = [0.01, 30, 45, 60, 75, 90, 100];
 
     const getSliderValue = (intensity) => {
       const index = intensityValues.indexOf(Number(intensity));
-      return index >= 0 ? index + 1 : 1;
+      return index >= 0 ? index : 1;
     };
 
-    useEffect(() => { if (isNewBox) { setCurrentBoxData({}); } }, [isNewBox]);
+    useEffect(() => {
+      if (isNewBox) {
+        setCurrentBoxData({});
+      }
+    }, [isNewBox]);
 
     useEffect(() => {
       if (Array.isArray(currentBoxData?.Custom)) {
@@ -55,8 +59,11 @@ const FormData = forwardRef(
     }
 
     const handleCustomBlur = () => {
-      const parsedArray = customInput.split(",").map((item) => item.trim()).filter((item) => item.length > 0);
-      setCurrentBoxData((prev) => ({ ...prev, Custom: parsedArray, }));
+      const parsedArray = customInput
+        .split(",")
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0);
+      setCurrentBoxData((prev) => ({ ...prev, Custom: parsedArray }));
     };
 
     const onSubmitHandler = (e) => {
@@ -67,10 +74,24 @@ const FormData = forwardRef(
         return;
       }
 
-      const { totalRow, totalCol, fieldName, fieldType, ReadingDirection, allowMultiple, } = currentBoxData;
+      const {
+        totalRow,
+        totalCol,
+        fieldName,
+        fieldType,
+        ReadingDirection,
+        allowMultiple,
+      } = currentBoxData;
 
       // Basic required fields validation
-      if (!fieldName || !fieldType || !ReadingDirection || !allowMultiple || !totalCol || !totalRow) {
+      if (
+        !fieldName ||
+        !fieldType ||
+        !ReadingDirection ||
+        !allowMultiple ||
+        !totalCol ||
+        !totalRow
+      ) {
         toast.warning("Please complete all required fields.");
         return;
       }
@@ -86,7 +107,9 @@ const FormData = forwardRef(
         const parsed = parseQuestionRange(fieldName);
 
         if (!parsed) {
-          toast.error("Invalid question field name. Use format q1-q10 or Q1-Q10.",);
+          toast.error(
+            "Invalid question field name. Use format q1-q10 or Q1-Q10.",
+          );
           return;
         }
       }
@@ -117,9 +140,13 @@ const FormData = forwardRef(
       // UPDATE EXISTING BOX
       setBoxes((prevBoxes) =>
         prevBoxes.map((box, idx) =>
-          idx === activeBox ? {
-            ...currentBoxData, fieldName: currentBoxData.fieldName?.trim(), radius: currentBoxData?.radius ?? 0.4,
-          } : box,
+          idx === activeBox
+            ? {
+                ...currentBoxData,
+                fieldName: currentBoxData.fieldName?.trim(),
+                radius: currentBoxData?.radius ?? 0.4,
+              }
+            : box,
         ),
       );
 
@@ -129,59 +156,76 @@ const FormData = forwardRef(
     const [shakeField, setShakeField] = useState({});
 
     const handleKeyDown = (e, fieldName) => {
-      const allowedKeys = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Arrowtop", "ArrowBottom", "Tab",];
+      const allowedKeys = [
+        "Backspace",
+        "Delete",
+        "ArrowLeft",
+        "ArrowRight",
+        "Arrowtop",
+        "ArrowBottom",
+        "Tab",
+      ];
 
       if (!/^[0-9]$/.test(e.key) && !allowedKeys.includes(e.key)) {
         e.preventDefault();
 
-        setShakeField((prev) => ({ ...prev, [fieldName]: true, }));
+        setShakeField((prev) => ({ ...prev, [fieldName]: true }));
 
         setTimeout(() => {
-          setShakeField((prev) => ({ ...prev, [fieldName]: false, }));
+          setShakeField((prev) => ({ ...prev, [fieldName]: false }));
         }, 300);
       }
     };
 
     return (
-      <Form onSubmit={onSubmitHandler} className="p--2 bg-white rounded shadow-sm "      >
+      <Form
+        onSubmit={onSubmitHandler}
+        className="p--2 bg-white rounded shadow-sm "
+      >
         <h2 className="text-center mb-1">Box Settings</h2>
 
-        {currentBoxData?.fieldType !== "barcode" && currentBoxData?.fieldType !== "OCR_Reading" && (
-          <Row>
-            <Col md={6}>
-              <Form.Group controlId="totalCol">
-                <Form.Label>Row:</Form.Label>
-                <Form.Control
-                  type="number"
-                  placeholder="Enter Rows"
-                  value={currentBoxData?.totalRow}
-                  className={shakeField.totalRow ? "shake" : ""}
-                  onKeyDown={(e) => handleKeyDown(e, "totalRow")}
-                  onChange={(e) =>
-                    setCurrentBoxData((prev) => ({
-                      ...prev,
-                      totalRow: e.target.value,
-                    }))
-                  }
-                />
-              </Form.Group>
-            </Col>
+        {currentBoxData?.fieldType !== "barcode" &&
+          currentBoxData?.fieldType !== "OCR_Reading" && (
+            <Row>
+              <Col md={6}>
+                <Form.Group controlId="totalCol">
+                  <Form.Label>Row:</Form.Label>
+                  <Form.Control
+                    type="number"
+                    placeholder="Enter Rows"
+                    value={currentBoxData?.totalRow}
+                    className={shakeField.totalRow ? "shake" : ""}
+                    onKeyDown={(e) => handleKeyDown(e, "totalRow")}
+                    onChange={(e) =>
+                      setCurrentBoxData((prev) => ({
+                        ...prev,
+                        totalRow: e.target.value,
+                      }))
+                    }
+                  />
+                </Form.Group>
+              </Col>
 
-            <Col md={6}>
-              <Form.Group controlId="totalRow">
-                <Form.Label>Col:</Form.Label>
-                <Form.Control
-                  type="number"
-                  placeholder="Enter Columns"
-                  value={currentBoxData?.totalCol}
-                  className={shakeField.totalCol ? "shake" : ""}
-                  onKeyDown={(e) => handleKeyDown(e, "totalCol")}
-                  onChange={(e) => setCurrentBoxData((prev) => ({ ...prev, totalCol: e.target.value, }))}
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-        )}
+              <Col md={6}>
+                <Form.Group controlId="totalRow">
+                  <Form.Label>Col:</Form.Label>
+                  <Form.Control
+                    type="number"
+                    placeholder="Enter Columns"
+                    value={currentBoxData?.totalCol}
+                    className={shakeField.totalCol ? "shake" : ""}
+                    onKeyDown={(e) => handleKeyDown(e, "totalCol")}
+                    onChange={(e) =>
+                      setCurrentBoxData((prev) => ({
+                        ...prev,
+                        totalCol: e.target.value,
+                      }))
+                    }
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+          )}
 
         <style jsx>
           {`
@@ -222,7 +266,12 @@ const FormData = forwardRef(
                 type="text"
                 value={currentBoxData?.fieldName}
                 placeholder="Enter Field Name"
-                onChange={(e) => setCurrentBoxData((prev) => ({ ...prev, fieldName: e.target.value, }))}
+                onChange={(e) =>
+                  setCurrentBoxData((prev) => ({
+                    ...prev,
+                    fieldName: e.target.value,
+                  }))
+                }
               />
             </Form.Group>
           </Col>
@@ -233,7 +282,13 @@ const FormData = forwardRef(
               <Form.Control
                 as="select"
                 value={currentBoxData?.fieldType}
-                onChange={(e) => setCurrentBoxData((prev) => ({ ...prev, fieldType: e.target.value, }))}>
+                onChange={(e) =>
+                  setCurrentBoxData((prev) => ({
+                    ...prev,
+                    fieldType: e.target.value,
+                  }))
+                }
+              >
                 <option value="">Select direction</option>
                 <option value="formfield">Form Field</option>
                 <option value="questionfield">Question Field</option>
@@ -252,7 +307,13 @@ const FormData = forwardRef(
               <Form.Control
                 as="select"
                 value={currentBoxData?.ReadingDirection ?? ""}
-                onChange={(e) => setCurrentBoxData((prev) => ({ ...prev, ReadingDirection: e.target.value, }))}    >
+                onChange={(e) =>
+                  setCurrentBoxData((prev) => ({
+                    ...prev,
+                    ReadingDirection: e.target.value,
+                  }))
+                }
+              >
                 <option value="">Select direction</option>
                 <option value="Row">Row</option>
                 <option value="Column">Column</option>
@@ -302,7 +363,14 @@ const FormData = forwardRef(
             </Col>
           )}
 
-          <Col md={currentBoxData?.allowMultiple === "false" || currentBoxData?.fieldType === "barcode" ? 6 : 12}>
+          <Col
+            md={
+              currentBoxData?.allowMultiple === "false" ||
+              currentBoxData?.fieldType === "barcode"
+                ? 6
+                : 12
+            }
+          >
             <Form.Group controlId="allowMultiple">
               <Form.Label>Blank Value:</Form.Label>
               <Form.Control
@@ -338,9 +406,7 @@ const FormData = forwardRef(
               </Form.Group>
             </Col>
           )}
-
         </Row>
-
 
         {currentBoxData?.fieldType !== "barcode" && (
           <Row className="mt-2">
@@ -365,8 +431,12 @@ const FormData = forwardRef(
                   <option value="">Select field value</option>
                   <option value="Integer">Numeric</option>
                   <option value="Alphabet">Alphabet</option>
-                  {currentBoxData?.fieldType !== "OCR_Reading" && <option value="Custom">Custom</option>}
-                  {currentBoxData?.fieldType === "OCR_Reading" && <option value="alphaNumeric">Alpha Numeric</option>}
+                  {currentBoxData?.fieldType !== "OCR_Reading" && (
+                    <option value="Custom">Custom</option>
+                  )}
+                  {currentBoxData?.fieldType === "OCR_Reading" && (
+                    <option value="alphaNumeric">Alpha Numeric</option>
+                  )}
                 </Form.Control>
               </Form.Group>
             </Col>
@@ -425,7 +495,7 @@ const FormData = forwardRef(
               <Form.Control
                 className="bubble-range"
                 type="range"
-                min={1}
+                min={0}
                 max={6}
                 step={1}
                 value={getSliderValue(currentBoxData?.bubbleIntensity ?? 30)}
@@ -434,70 +504,71 @@ const FormData = forwardRef(
 
                   setCurrentBoxData((prev) => ({
                     ...prev,
-                    bubbleIntensity: intensityValues[sliderValue - 1],
+                    bubbleIntensity: intensityValues[sliderValue],
                   }));
                 }}
               />
             </Form.Group>
           </Col>
 
-          {currentBoxData?.fieldType !== "barcode" && currentBoxData?.fieldType !== "OCR_Reading" && (
-            <Col md={6}>
-              <Form.Group controlId="radius">
-                <Form.Label>
-                  Bubble Size:
-                  <strong>{currentBoxData?.radius ?? 0.4}</strong>
-                </Form.Label>
+          {currentBoxData?.fieldType !== "barcode" &&
+            currentBoxData?.fieldType !== "OCR_Reading" && (
+              <Col md={6}>
+                <Form.Group controlId="radius">
+                  <Form.Label>
+                    Bubble Size:
+                    <strong>{currentBoxData?.radius ?? 0.4}</strong>
+                  </Form.Label>
 
-                <Form.Control
-                  className="bubble-range"
-                  type="range"
-                  min={0.01}
-                  max={0.7}
-                  step={0.001}
-                  value={currentBoxData?.radius}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    setCurrentBoxData((p) => ({ ...p, radius: val }));
-                    setBoxes((prev) =>
-                      prev.map((b, i) =>
-                        i === activeBox ? { ...b, radius: val } : b,
-                      ),
-                    );
-                  }}
-                />
-              </Form.Group>
+                  <Form.Control
+                    className="bubble-range"
+                    type="range"
+                    min={0.01}
+                    max={0.7}
+                    step={0.001}
+                    value={currentBoxData?.radius}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setCurrentBoxData((p) => ({ ...p, radius: val }));
+                      setBoxes((prev) =>
+                        prev.map((b, i) =>
+                          i === activeBox ? { ...b, radius: val } : b,
+                        ),
+                      );
+                    }}
+                  />
+                </Form.Group>
 
-              <style jsx>
-                {`
-                  .bubble-range {
-                        width: 100%;
-                        appearance: none;
-                        -webkit-appearance: none;
-                        background: transparent;
-                      }
+                <style jsx>
+                  {`
+                    .bubble-range {
+                      width: 100%;
+                      appearance: none;
+                      -webkit-appearance: none;
+                      background: transparent;
+                    }
 
-                      /* Chrome / Edge */
-                      .bubble-range::-webkit-slider-runnable-track {
-                        height: 5px;
-                        background: #d3d3d3;
-                        border-radius: 5px;
-                      }
+                    /* Chrome / Edge */
+                    .bubble-range::-webkit-slider-runnable-track {
+                      height: 5px;
+                      background: #d3d3d3;
+                      border-radius: 5px;
+                    }
 
-                      .bubble-range::-webkit-slider-thumb {
-                        appearance: none;
-                        -webkit-appearance: none;
-                        width: 16px;
-                        height: 16px;
-                        margin-top: -5.5px;
-                        border-radius: 50%;
-                        background: #0d8fe8;
-                        cursor: pointer;
-                      }
-                `}
-              </style>
-            </Col>
-          )}
+                    .bubble-range::-webkit-slider-thumb {
+                      appearance: none;
+                      -webkit-appearance: none;
+                      width: 16px;
+                      height: 16px;
+                      margin-top: -5.5px;
+                      border-radius: 50%;
+                      background: #0d8fe8;
+                      cursor: pointer;
+                    }
+                  `}
+                </style>
+              </Col>
+            )}
         </Row>
 
         {currentBoxData?.fieldType !== "barcode" && (
@@ -509,10 +580,11 @@ const FormData = forwardRef(
                 </Form.Label>
 
                 <div
-                  className={`btn btn-sm  d-flex align-items-center justify-content-between ${currentBoxData?.best_bubble
-                    ? "btn-success"
-                    : "btn-outline-secondary"
-                    }`}
+                  className={`btn btn-sm  d-flex align-items-center justify-content-between ${
+                    currentBoxData?.best_bubble
+                      ? "btn-success"
+                      : "btn-outline-secondary"
+                  }`}
                   onClick={() => {
                     const newValue = !currentBoxData?.best_bubble;
                     setCurrentBoxData((p) => ({ ...p, best_bubble: newValue }));
@@ -575,10 +647,11 @@ const FormData = forwardRef(
                 </Form.Label>
 
                 <div
-                  className={`btn btn-sm d-flex align-items-center justify-content-between ${currentBoxData?.merge
-                    ? "btn-warning"
-                    : "btn-outline-secondary"
-                    }`}
+                  className={`btn btn-sm d-flex align-items-center justify-content-between ${
+                    currentBoxData?.merge
+                      ? "btn-warning"
+                      : "btn-outline-secondary"
+                  }`}
                   onClick={() => {
                     const newValue = !currentBoxData?.merge;
 
@@ -603,10 +676,20 @@ const FormData = forwardRef(
                     OFF
                   </span>
 
-                  <div className="bg-white rounded-circle shadow-sm"
-                    style={{ width: "28px", height: "26px", position: "absolute", left: currentBoxData?.merge ? "calc(100% - 29px)" : "2px", transition: "left 0.3s ease", }} />
+                  <div
+                    className="bg-white rounded-circle shadow-sm"
+                    style={{
+                      width: "28px",
+                      height: "26px",
+                      position: "absolute",
+                      left: currentBoxData?.merge ? "calc(100% - 29px)" : "2px",
+                      transition: "left 0.3s ease",
+                    }}
+                  />
 
-                  <span className={currentBoxData?.merge ? "fw-bold" : "text-muted"}                  >
+                  <span
+                    className={currentBoxData?.merge ? "fw-bold" : "text-muted"}
+                  >
                     ON
                   </span>
                 </div>
@@ -620,7 +703,8 @@ const FormData = forwardRef(
             style={{ display: isNewBox ? "none" : "" }}
             ref={ref}
             type="submit"
-            variant="primary">
+            variant="primary"
+          >
             Save
           </Button>
         </div>

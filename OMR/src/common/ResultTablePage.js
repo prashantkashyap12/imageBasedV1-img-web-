@@ -7,14 +7,14 @@ const ResultTablePage = () => {
 
   const tableHeaders = location.state?.tableHeaders || [];
   const tableData = location.state?.tableData || [];
-  const resultBlob = location.state?.resultBlob || [];
+  const resultBlob = location.state?.resultBlob || null; // changed: [] → null
 
   return (
-    <div style={{ maxHeight:"60%"}}>
+    <div style={{ maxHeight: "60%" }}>
       <ResultTable
         tableHeaders={tableHeaders}
         tableData={tableData}
-        resultBlob= {resultBlob}
+        resultBlob={resultBlob}
       />
     </div>
   );

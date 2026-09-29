@@ -12,19 +12,25 @@ const ImageViewerPanel = React.memo(function ImageViewerPanel({
 }) {
   if (!isOpen) return null;
 
+  // Size and position that always fit the window (phones included)
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const width = Math.min(600, vw - 24);
+  const height = Math.min(700, vh - 40);
+
   return (
     <Rnd
       default={{
-        width:  600,
-        height: 700,
-        x: window.innerWidth  / 2 - 450,
-        y: window.innerHeight / 2 - 450,
+        width,
+        height,
+        x: Math.max(12, (vw - width) / 2),
+        y: Math.max(12, (vh - height) / 2),
       }}
       bounds="window"
       dragHandleClassName="ivp-header"
       enableResizing
-      minWidth={400}
-      minHeight={300}
+      minWidth={Math.min(400, width)}
+      minHeight={Math.min(300, height)}
       style={{ zIndex: 1000 }}
     >
       <div className="ivp-container">

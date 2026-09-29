@@ -35,7 +35,9 @@
   gap: 16px;
 }
 
-/* Panels (STEP BOXES) */
+/* Panels (STEP BOXES)
+   CHANGED: was `height: 360px; overflow: hidden;` which clipped the fields and
+   error messages. Panels now grow with their content and stay equal height. */
 .result-panel {
   background: #fff;
   border: 1px solid #e2e6ea;
@@ -45,15 +47,18 @@
   display: flex;
   flex-direction: column;
 
-  height: 360px; /* ✅ fixed equal height */
-  overflow: hidden; /* prevents overflow breaking */
+  min-height: 360px;
+  height: 100%;
 }
 
-/* Scrollable content inside panel */
+/* ADDED: dropdowns fill the panel width (Bootstrap 4 has no .form-select) */
+.result-panel select {
+  width: 100%;
+}
+
+/* Panel content */
 .panel-body {
   flex: 1;
-  overflow-y: auto;
-  padding-right: 4px;
 }
 
 /* Step titles */
@@ -115,9 +120,9 @@
   padding: 7px 10px;
 }
 
-/* Header selection */
+/* Header selection (CHANGED: capped height so long column lists scroll) */
 .header-box {
-  flex: 1;
+  max-height: 240px;
   overflow-y: auto;
   border: 1px solid lightgray;
   padding: 10px;
@@ -143,6 +148,12 @@
   font-size: 13px;
   font-weight: 600;
   color: #fff;
+}
+
+.btn-primary-custom:disabled,
+.btn-add:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Table */
